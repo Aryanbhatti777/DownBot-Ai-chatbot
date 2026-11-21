@@ -1,7 +1,8 @@
 import { ChatGroq } from "@langchain/groq";
 import { config } from '../../config/env.js'
 import * as z from 'zod'
-import { SystemMessage, HumanMessage } from "langchain";
+import { HumanMessage, SystemMessage } from "langchain";
+
 
 const model = new ChatGroq({
     model: "qwen/qwen3.8-27b",
@@ -13,7 +14,7 @@ const structureModel = model.withStructuredOutput(z.object({
 }));
 
 export async function generateTitle(message) {
-    const SystemMessage = new SystemMessage(`
+    const systemMessage = new SystemMessage(`
         You are an AI assistant that generates a concise and relevant title for a conversation based on the user's message.
 
         ## Follow these guidelines:
@@ -24,9 +25,9 @@ export async function generateTitle(message) {
         
         `)
     
-    const HumanMessage = new HumanMessage(message);
+    const humanMessage = new HumanMessage(message);
 
-    const res = await structureModel.invoke([SystemMessage, HumanMessage]);
+    const res = await structureModel.invoke([systemMessage, humanMessage]);
 
-    return response
+    return res
 }
