@@ -1,6 +1,7 @@
 import { ArrowRight, Check, CircleHelp, LockKeyhole, Sparkles, WandSparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth.js";
+import { useState } from "react";
 
 const models = [
   { name: "ChatGPT", color: "bg-emerald-500" },

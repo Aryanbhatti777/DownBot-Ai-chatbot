@@ -1,9 +1,10 @@
-import { createConversation, findConversationById } from "../DAO/conversation.dao.js";
+import { createConversation, findConversationById, findConversationByUser } from "../DAO/conversation.dao.js";
 import { generateTitle } from "../services/ai/ai.title.service.js";
 import { AppError } from "../utils/AppError.js";
 import model from "../services/ai/main.service.js";
 import { findMessagesByConversation, createMessage } from "../DAO/message.dao.js";
 import { AIMessage, HumanMessage } from "langchain";
+import { sendSuccess } from "../utils/apiResponse.js";
 
 export const handleMessage = async (req, res, next) => {
     
@@ -77,3 +78,29 @@ export const handleMessage = async (req, res, next) => {
 
 
 }
+
+export const getAllConversations = async (req, res, next) => {
+
+    const user = req.user
+
+    const convs = await findConversationByUser(user._id);
+
+    return sendSuccess(res, 200, 'Conversationsfetchedsuccessfully', {convs})
+}
+
+export const getMessagesByConversation = async (req, res, next) => {
+    
+    const id = req.params.id;
+    const user = req.user;
+
+    const conv = await findConversationById({ conversationId: id, user: user._id });
+
+    if (!conv) {
+        return next(new AppError(404, 'Conversation not found'));
+    }
+
+    const messages = await findMessagesByConversation(id);
+
+    return sendSuccess(res, 200, "Messages fetched successfully", messages)
+}
+

@@ -37,3 +37,9 @@ export async function updateConversationTitle(conversationId, userId, title) {
 export async function deleteConversation(conversationId, userId) {
   return ConversationModel.findOneAndDelete({ _id: conversationId, user: userId });
 }
+
+// get all conversations by a user
+
+export async function findConversationByUser(userId) {
+  return ConversationModel.find({ user: userId });
+}
