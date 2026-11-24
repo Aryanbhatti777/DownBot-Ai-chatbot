@@ -3,26 +3,40 @@ import { useDispatch, useSelector } from "react-redux";
 import { authApi, getApiError } from "../api/authApi.js";
 import { clearSession, setError, setLoading, setReady, setSession } from "../state/authSlice.js";
 
+let sessionRestorePromise;
+
+function restoreSessionOnce() {
+  if (!sessionRestorePromise) {
+    sessionRestorePromise = (async () => {
+      const refreshed = await authApi.refresh();
+      const profile = await authApi.me(refreshed.accessToken);
+      return { accessToken: refreshed.accessToken, user: profile.user };
+    })().finally(() => {
+      sessionRestorePromise = null;
+    });
+  }
+  return sessionRestorePromise;
+}
+
 export function useAuth() {
   const dispatch = useDispatch();
   const auth = useSelector((state) => state.auth);
 
   useEffect(() => {
     let active = true;
-    async function restoreSession() {
-      try {
-        const refreshed = await authApi.refresh();
-        const profile = await authApi.me(refreshed.accessToken);
-        if (active) dispatch(setSession({ accessToken: refreshed.accessToken, user: profile.user }));
-      } catch (error) {
-        if (active && error.response?.status === 401) {
-          dispatch(setReady());
-        } else if (active) {
-          dispatch(setError(getApiError(error)));
-        }
-      }
+    if (!auth.ready) {
+      restoreSessionOnce()
+        .then((session) => {
+          if (active) dispatch(setSession(session));
+        })
+        .catch((error) => {
+          if (active && error.response?.status === 401) {
+            dispatch(setReady());
+          } else if (active) {
+            dispatch(setError(getApiError(error)));
+          }
+        });
     }
-    if (!auth.ready) restoreSession();
     return () => { active = false; };
   }, [auth.ready, dispatch]);
 
