@@ -11,5 +11,5 @@ export async function createMessage({ conversationId, role, content }) {
 
 /** Retrieves a conversation's messages in chronological order. */
 export async function findMessagesByConversation(conversationId) {
-  return MessageModel.find({ conversation: conversationId })
+  return MessageModel.find({ conversation: conversationId }).sort({ createdAt: 1, _id: 1 });
 }

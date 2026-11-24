@@ -1,4 +1,9 @@
-import { createConversation, findConversationById, findConversationByUser } from "../DAO/conversation.dao.js";
+import {
+    createConversation,
+    findConversationById,
+    findConversationsByUser,
+    updateConversationLastMessage
+} from "../DAO/conversation.dao.js";
 import { generateTitle } from "../services/ai/ai.title.service.js";
 import { AppError } from "../utils/AppError.js";
 import model from "../services/ai/main.service.js";
@@ -46,10 +51,7 @@ export const handleMessage = async (req, res, next) => {
     })
 
     const stream = await model.stream([
-        new SystemMessage(`
-            - Your name is Downbot.
-            -You speak in Cavemen language
-            `),
+        new SystemMessage(`Your name is Downbot.`),
         ...messages
     ]);
 
@@ -76,14 +78,15 @@ export const handleMessage = async (req, res, next) => {
         res.write(`data: ${JSON.stringify({ chunk: chunk.content })}\n\n`);
     }
 
-    res.end();
-
     await createMessage({
         role: "assistant", 
         content: aiChunk.content,
         conversationId: conversation._id
     })
 
+    await updateConversationLastMessage(conversation._id, user._id, content);
+
+    res.end();
 
 }
 
@@ -91,7 +94,7 @@ export const getAllConversations = async (req, res, next) => {
 
     const user = req.user
 
-    const convs = await findConversationByUser(user._id);
+    const convs = await findConversationsByUser(user._id);
 
     return sendSuccess(res, 200, 'Conversationsfetchedsuccessfully', {convs})
 }
@@ -101,7 +104,7 @@ export const getMessagesByConversation = async (req, res, next) => {
     const id = req.params.id;
     const user = req.user;
 
-    const conv = await findConversationById({ conversationId: id, user: user._id });
+    const conv = await findConversationById(id, user._id);
 
     if (!conv) {
         return next(new AppError(404, 'Conversation not found'));
