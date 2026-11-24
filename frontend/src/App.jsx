@@ -1,6 +1,7 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import LoginPage from "./features/auth/ui/LoginPage.jsx";
 import RegisterPage from "./features/auth/ui/RegisterPage.jsx";
+import ConversationPage from "./features/conversation/ui/ConversationPage.jsx";
 
 export default function App() {
   return (
@@ -9,6 +10,8 @@ export default function App() {
         <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/conversation" element={<ConversationPage />} />
+        <Route path="/conversation/:conversationId" element={<ConversationPage />} />
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </BrowserRouter>

@@ -41,6 +41,9 @@ export default function AuthPage({ mode }) {
           <div className="mt-10 flex flex-wrap justify-center gap-3">
             {models.map((model) => <span key={model.name} className="flex items-center gap-2 rounded-full bg-white px-4 py-2.5 text-sm text-stone-700 shadow-sm ring-1 ring-stone-200/70"><span className={`h-2 w-2 rounded-full ${model.color}`} />{model.name}</span>)}
           </div>
+          <Link to="/conversation" className="mt-10 inline-flex items-center gap-2 rounded-xl bg-[#263c2e] px-5 py-3 text-sm font-medium text-white transition hover:bg-[#344e3d]">
+            Start a conversation <ArrowRight size={16} />
+          </Link>
         </section>
       </main>
     );
