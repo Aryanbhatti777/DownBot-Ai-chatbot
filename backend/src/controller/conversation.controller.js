@@ -3,7 +3,7 @@ import { generateTitle } from "../services/ai/ai.title.service.js";
 import { AppError } from "../utils/AppError.js";
 import model from "../services/ai/main.service.js";
 import { findMessagesByConversation, createMessage } from "../DAO/message.dao.js";
-import { AIMessage, HumanMessage } from "langchain";
+import { AIMessage, HumanMessage, SystemMessage } from "langchain";
 import { sendSuccess } from "../utils/apiResponse.js";
 
 export const handleMessage = async (req, res, next) => {
@@ -45,7 +45,13 @@ export const handleMessage = async (req, res, next) => {
         conversationId: conversation.id
     })
 
-    const stream = await model.stream(messages);
+    const stream = await model.stream([
+        new SystemMessage(`
+            - Your name is Downbot.
+            -You speak in Cavemen language
+            `),
+        ...messages
+    ]);
 
     // ---------- set headers for SSE -----------
 
@@ -59,8 +65,10 @@ export const handleMessage = async (req, res, next) => {
 
     let aiChunk = null;
     for await (const chunk of stream) {
+        process.stdout.write(chunk.text);
         if (aiChunk == null) {
             aiChunk = chunk;
+            
         } else {
             aiChunk = aiChunk.concat(chunk);
         }
