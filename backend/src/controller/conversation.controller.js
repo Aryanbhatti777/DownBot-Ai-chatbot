@@ -13,6 +13,7 @@ import { sendSuccess } from "../utils/apiResponse.js";
 import { MCPAdapter } from '@langchain/mcp-adapters'
 import { createAgent, AIMessageChunk } from "langchain";
 import { config } from "../config/env.js";
+import {getUserContext, setUserContext} from '../services/ai/memory.tools.js'
 
 const adapter = new MCPAdapter({
     servers: {
@@ -66,7 +67,7 @@ export const handleMessage = async (req, res, next) => {
 
     const agent = createAgent({
         model,
-        tools
+        tools: [setUserContext, getUserContext, ...tools]
     })
 
     const stream = await agent.stream({
@@ -75,7 +76,10 @@ export const handleMessage = async (req, res, next) => {
             ...messages
         ]
     }, {
-        streamMode: "messages"
+        streamMode: "messages",
+        configurable: {
+            userId: user._id
+        }
     });
 
     // ---------- set headers for SSE -----------
