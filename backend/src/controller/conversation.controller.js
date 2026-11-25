@@ -10,6 +10,20 @@ import model from "../services/ai/main.service.js";
 import { findMessagesByConversation, createMessage } from "../DAO/message.dao.js";
 import { AIMessage, HumanMessage, SystemMessage } from "langchain";
 import { sendSuccess } from "../utils/apiResponse.js";
+import { MCPAdapter } from '@langchain/mcp-adapters'
+import { createAgent, AIMessageChunk } from "langchain";
+import { config } from "../config/env.js";
+
+const adapter = new MCPAdapter({
+    servers: {
+        tavily: {
+            url: config.TAVILY_URL
+        }
+    }
+})
+
+const tools = await adapter.listTools();
+
 
 export const handleMessage = async (req, res, next) => {
     
@@ -50,10 +64,19 @@ export const handleMessage = async (req, res, next) => {
         conversationId: conversation.id
     })
 
-    const stream = await model.stream([
-        new SystemMessage(`Your name is Downbot.`),
-        ...messages
-    ]);
+    const agent = createAgent({
+        model,
+        tools
+    })
+
+    const stream = await agent.stream({
+        messages: [
+            new SystemMessage(`Always try to give short answers`),
+            ...messages
+        ]
+    }, {
+        streamMode: "messages"
+    });
 
     // ---------- set headers for SSE -----------
 
@@ -66,14 +89,17 @@ export const handleMessage = async (req, res, next) => {
     res.write(`data: ${JSON.stringify({ conversationId: conversation.id, title: conversation.title })}\n\n`);
 
     let aiChunk = null;
-    for await (const chunk of stream) {
-        process.stdout.write(chunk.text);
-        if (aiChunk == null) {
-            aiChunk = chunk;
-            
-        } else {
-            aiChunk = aiChunk.concat(chunk);
+    for await (const [chunk] of stream) {
+        console.log(chunk)
+        if (chunk instanceof AIMessageChunk) {
+            if (aiChunk == null) {
+                aiChunk = chunk;
+
+            } else {
+                aiChunk = aiChunk.concat(chunk);
+            }
         }
+        
 
         res.write(`data: ${JSON.stringify({ chunk: chunk.content })}\n\n`);
     }
@@ -110,7 +136,7 @@ export const getMessagesByConversation = async (req, res, next) => {
         return next(new AppError(404, 'Conversation not found'));
     }
 
-    const messages = await findMessagesByConversation(id);
+    const messages = (await findMessagesByConversation(id)).filter(message => message.role !== "tool");
 
     return sendSuccess(res, 200, "Messages fetched successfully", messages)
 }
