@@ -72,15 +72,20 @@ export const handleMessage = async (req, res, next) => {
 
     const stream = await agent.stream({
         messages: [
-            new SystemMessage(`Always try to give short answers`),
+            new SystemMessage(`
+                - Always try to give short answers
+                - Current Date ${new Date().toISOString()}
+                `),
             ...messages
         ]
     }, {
         streamMode: "messages",
         configurable: {
-            userId: user._id
+            userId: user._id.toString()
         }
     });
+    console.log(user._id.toString());
+    
 
     // ---------- set headers for SSE -----------
 
@@ -94,7 +99,6 @@ export const handleMessage = async (req, res, next) => {
 
     let aiChunk = null;
     for await (const [chunk] of stream) {
-        console.log(chunk)
         if (chunk instanceof AIMessageChunk) {
             if (aiChunk == null) {
                 aiChunk = chunk;
@@ -102,10 +106,8 @@ export const handleMessage = async (req, res, next) => {
             } else {
                 aiChunk = aiChunk.concat(chunk);
             }
+            res.write(`data: ${JSON.stringify({ chunk: chunk.content })}\n\n`);
         }
-        
-
-        res.write(`data: ${JSON.stringify({ chunk: chunk.content })}\n\n`);
     }
 
     await createMessage({

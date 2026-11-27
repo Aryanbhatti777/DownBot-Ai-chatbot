@@ -10,6 +10,9 @@ const required = (name) => {
   return value;
 };
 
+
+
+
 /** @type {Readonly<{ mongoUri: string, port: number, nodeEnv: string, accessTokenSecret: string, refreshTokenSecret: string }>} */
 export const config = Object.freeze({
   mongoUri: required("MONGO_URI"),
@@ -19,7 +22,11 @@ export const config = Object.freeze({
   refreshTokenSecret: required("REFRESH_TOKEN_SECRET"),
   GROQ_API_KEY: required("GROQ_API_KEY"),
   TAVILY_URL: required("TAVILY_URL"),
-  COHERE_API_KEY: required("COHERE_API_KEY")
+  COHERE_API_KEY: required("COHERE_API_KEY"),
+  LANGSMITH_TRACING: process.env.LANGSMITH_TRACING,
+  LANGSMITH_API_KEY: process.env.LANGSMITH_API_KEY,
+  LANGSMITH_AGENT_ID : process.env.LANGSMITH_AGENT_ID,
+  LANGSMITH_AGENT_ENVIRONMENT : process.env.LANGSMITH_AGENT_ENVIRONMENT,
 });
 
 if (!Number.isInteger(config.port) || config.port < 1 || config.port > 65535) {
